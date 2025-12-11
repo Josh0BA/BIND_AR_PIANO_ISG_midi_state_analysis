@@ -10,19 +10,19 @@ Funktionen:
 - Extrahiert Subject-ID aus Ordnername und Block aus Dateiname
 - Schreibt alle Transitionen in CSV: subject, block, state_from/to, times, frequencies
 
-Struktur: BIND_AR_PIANO_ISG_midi_state_analysis/
-│
+Struktur: BIND_AR_PIANO_ISG_midi_state_analysis/                                                                        
+│                                                                    
 ├── midi_state_analysis/                                                                                            
 │   ├── __init__.py                                                                                
 │   ├── config.py                                                                
-│   ├── midi_utils.py
-│   ├── state_detection.py
-│   ├── transitions.py
-│   ├── folder_utils.py
-│   ├── analyzer.py
-│   └── cli.py
-│
-└── setup.py
+│   ├── midi_utils.py                                            
+│   ├── state_detection.py                                        
+│   ├── transitions.py                                    
+│   ├── folder_utils.py                                            
+│   ├── analyzer.py                                            
+│   └── cli.py                                                
+│                                                        
+└── setup.py                                            
 
 Performance-Optimierungen:
 - Effizientes Track-Merging und State-Erkennung
