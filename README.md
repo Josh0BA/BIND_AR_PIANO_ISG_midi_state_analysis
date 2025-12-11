@@ -13,14 +13,14 @@ Funktionen:
 Struktur: BIND_AR_PIANO_ISG_midi_state_analysis/                                                                        
 │                                                                    
 ├── midi_state_analysis/                                                                                            
-│   ├── __init__.py                                                                                
-│   ├── config.py                                                                
-│   ├── midi_utils.py                                            
-│   ├── state_detection.py                                        
-│   ├── transitions.py                                    
-│   ├── folder_utils.py                                            
-│   ├── analyzer.py                                            
-│   └── cli.py                                                
+│       ├── __init__.py                                                                                
+│       ├── config.py                                                                
+│       ├── midi_utils.py                                            
+│       ├── state_detection.py                                        
+│       ├── transitions.py                                    
+│       ├── folder_utils.py                                            
+│       ├── analyzer.py                                            
+│       └── cli.py                                                
 │                                                        
 └── setup.py                                            
 
