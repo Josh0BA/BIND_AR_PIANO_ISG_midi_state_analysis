@@ -1,7 +1,7 @@
 # BIND_AR_PIANO_ISG_midi_state_analysis
 Analyse von MIDI-Dateien für das Motorik-lernen am Klavier mit AR. 
 
-Anleitung:
+Anleitung:																													
 -Installation
 Lade das Projekt herunter oder klone das Repository. Installiere das Paket anschließend mit:
 pip install .
@@ -12,7 +12,7 @@ Daten (MIDI)/BE16MI/MIDI_BE16MI_B1.mid
 
 -Analyse starten
 Öffne ein Terminal und führe das Programm aus:
-midi-analysis .
+-> midi-analysis .
 Das Programm sucht automatisch nach dem Ordner „Daten (MIDI)“.
 Optional kannst du einen eigenen Output-Dateinamen angeben:
 midi-analysis . -o output.csv
@@ -44,10 +44,10 @@ Struktur: BIND_AR_PIANO_ISG_midi_state_analysis/
 │                                                        
 └── setup.py                                            
 
-Performance-Optimierungen:
+Performance-Optimierungen:												
 - Effizientes Track-Merging und State-Erkennung
 - zip+comprehension für schnelle Transition-Berechnung
 - Kompakte Frequenzzuordnung ohne redundante Schleifen
 
-Voraussetzungen:
+Voraussetzungen:																							
     pip install mido
