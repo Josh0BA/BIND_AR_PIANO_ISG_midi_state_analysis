@@ -1,7 +1,0 @@
-mido
-pandas
-pretty_midi
-scipy
-statsmodels
-seaborn
-matplotlib
