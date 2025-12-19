@@ -9,8 +9,13 @@ def main():
     args = parser.parse_args()
     midi_root = find_midi_data_folder(args.start_path)
     if not midi_root:
-        print("✗ 'Daten (MIDI)' nicht gefunden.")
-        return
+        fallback = r"C:\Users\joshb\Desktop\CODE\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)"
+        if os.path.isdir(fallback):
+            midi_root = fallback
+            print(f"✓ Verwende Fallback-Ordner: {midi_root}")
+        else:
+            print("✗ 'Daten (MIDI)' nicht gefunden und Fallback-Pfad existiert nicht.")
+            return
     output = args.output or os.path.join(os.path.dirname(midi_root), "MIDI_ANALYSIS_STATES.csv")
     analyze_root_folder(midi_root, output)
     print("✓ Analyse abgeschlossen:", output)

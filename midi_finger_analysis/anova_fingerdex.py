@@ -9,114 +9,124 @@ from scipy import stats
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import seaborn as sns
-import matplotlib.pyplot as plt  
+import matplotlib.pyplot as plt  # Extract participant ID, appointment, song, and attempt from filename
+participant_id = filename.split('_')[0]
+appointment = filename.split('_')[1]
+song = filename.split('_')[2]
+attempt = filename.split('_')[3].split('.')[0]  # Remove file extension
 import math
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import os
 from scipy.stats import ttest_rel
 
-df_finger = pd.read_csv("src/data_analysis_pipeline/Data/fingergeschicklichkeit.csv")
+from midi_state_analysis.folder_utils import find_midi_data_folder
 
+# Find the MIDI data folder and look for fingergeschicklichkeit.csv in the parent directory
+midi_folder = find_midi_data_folder(start_path='.')
+if midi_folder:
+    csv_path = os.path.join(os.path.dirname(midi_folder), "fingergeschicklichkeit.csv")
+else:
+    # Fallback to old path if MIDI folder not found
+    csv_path = "src/data_analysis_pipeline/Data/fingergeschicklichkeit.csv"
 
-# add groupe column to the dataframes
-# Sample category list as a string
-category_list = """
-AA10MA Klassisch
-BE01CL AR
-BE13NA Klassisch
-BE17MA AR
-BI21FL Klassisch
-BU01FR Klassisch
-DA27SV Klassisch
-DI03CA AR
-FO09MA AR
-GE03KA AR
-GI16CA AR
-JE13CL Klassisch
-LU03GA Klassisch
-SU13BA Klassisch
-SU22PA AR
-VA10SI Klassisch
-WA24AN AR
-ZU17AL AR
-"""
-
-#Convert to dictionary
-category_dict = dict(line.split() for line in category_list.strip().split('\n'))
-
-# Convert the dictionary to a DataFrame
-df_finger['Category'] = df_finger[df_finger.columns[0]].map(category_dict)
-
-# remove contestants that did not complete the study
-df_finger = df_finger[df_finger['Category'].notna()]
+df_finger = pd.read_csv(csv_path)
 
 # JE13CL is a special case, played wrong sequence therefore just take the his played sequence calculated in saving_JE13CL.py
-Finger_1_1_correct = 16
-Finger_1_2_correct = 26
+Fingertest1_correct = 16
+Fingertest2_correct = 26
 
-df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Finger_1-1_correct'] = Finger_1_1_correct
-df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Finger_1-2_correct'] = Finger_1_2_correct
-
-
+df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingertest1_correct'] = Fingertest1_correct
+df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingertest2_correct'] = Fingertest2_correct
 
 
-## Anovatest
+
+
+## Statistical Analysis
 
 df_finger_clean = df_finger.rename(columns=lambda x: x.replace('-', '_'))
 
-# ttest
-# T-Test
-klassisch = df_finger_clean[df_finger_clean['Category'] == 'Klassisch']
-t_stat, p_val = ttest_rel(klassisch['Finger_1_1_correct'], klassisch['Finger_5_1_correct'])
-print(f"Klassische Gruppe Pre vs. Post: p = {p_val:.4f}")
-print(f"t(8) = {t_stat:.2f}")
-
-# List of columns to test
-cols_to_test = [col for col in df_finger_clean.columns if ('correct' in col or 'keys' in col)]
-
-# Run ANOVA for each and collect significant columns
-significant_cols = []
-for col in cols_to_test:
-    print(f"\n--- Prüfung: {col} ---")
+# Create long format data for ANOVA with Timepoint (Pretest vs Posttest)
+data_long = []
+for idx, row in df_finger_clean.iterrows():
+    participant_id = row['Participant_ID']
     
-    # Normalverteilung je Gruppe
-    for group in df_finger_clean['Category'].unique():
-        stat, p = shapiro(df_finger_clean[df_finger_clean['Category'] == group][col])
-        print(f"Shapiro-Wilk für {group}: p = {p:.4f}")
+    # Pretest (Fingertest1 and Fingertest2)
+    for col in ['Fingertest1_correct', 'Fingertest2_correct']:
+        if col in df_finger_clean.columns and not pd.isna(row[col]):
+            data_long.append({
+                'Participant_ID': participant_id,
+                'Timepoint': 'Pretest',
+                'Test': col,
+                'Score': row[col]
+            })
     
-    # ANOVA
-    model = smf.ols(f'{col} ~ C(Category)', data=df_finger_clean).fit()
-    anova = sm.stats.anova_lm(model, typ=2)
-    p_value = anova['PR(>F)'][0]
-    print(f"ANOVA: p = {p_value:.4f}")
-    
-    if p_value < 0.05:
-        print(" → Signifikanter Unterschied! (ANOVA)")
-        # Optional: Post-hoc schon erledigt durch Tukey
-    else:
-        # Wenn ANOVA nicht signifikant oder Normalverteilung fraglich
-        # prüfe zusätzlich Mann-Whitney
-        group1 = df_finger_clean[df_finger_clean['Category'] == 'Klassisch'][col]
-        group2 = df_finger_clean[df_finger_clean['Category'] == 'AR'][col]
-        stat, p_mwu = mannwhitneyu(group1, group2, alternative='two-sided')
-        print(f"Mann-Whitney-U-Test: p = {p_mwu:.4f}")
+    # Posttest (Fingertest3 and Fingertest4)
+    for col in ['Fingertest3_correct', 'Fingertest4_correct']:
+        if col in df_finger_clean.columns and not pd.isna(row[col]):
+            data_long.append({
+                'Participant_ID': participant_id,
+                'Timepoint': 'Posttest',
+                'Test': col,
+                'Score': row[col]
+            })
 
+df_long = pd.DataFrame(data_long)
 
+# Paired t-test: Fingertest1 vs Fingertest3
+if 'Fingertest1_correct' in df_finger_clean.columns and 'Fingertest3_correct' in df_finger_clean.columns:
+    t_stat, p_val = ttest_rel(df_finger_clean['Fingertest1_correct'], df_finger_clean['Fingertest3_correct'])
+    print(f"\nPaired t-test (Fingertest1 vs Fingertest3):")
+    print(f"  t-statistic = {t_stat:.2f}")
+    print(f"  p-value = {p_val:.4f}")
+    print(f"  Result: {'Significant difference' if p_val < 0.05 else 'No significant difference'}")
 
-# Plot all Tukey HSD results in one figure
-if significant_cols:
-    fig, axes = plt.subplots(nrows=len(significant_cols), figsize=(8, 4 * len(significant_cols)))
-    if len(significant_cols) == 1:
-        axes = [axes]  # make it iterable
-    for ax, col in zip(axes, significant_cols):
-        tukey = pairwise_tukeyhsd(endog=df_finger_clean[col], groups=df_finger_clean['Category'], alpha=0.05)
-        tukey.plot_simultaneous(ax=ax)
-        ax.set_title(f'Tukey HSD: {col}')
-    plt.tight_layout()
-    plt.show()
+# ANOVA: Pretest vs Posttest
+print(f"\n{'='*60}")
+print("ANOVA: Pretest vs Posttest")
+print(f"{'='*60}")
+
+# Check normality for each timepoint
+for timepoint in df_long['Timepoint'].unique():
+    data = df_long[df_long['Timepoint'] == timepoint]['Score']
+    stat, p = shapiro(data)
+    print(f"\nShapiro-Wilk Test for {timepoint}:")
+    print(f"  W = {stat:.4f}, p = {p:.4f}")
+    print(f"  {'Normally distributed' if p > 0.05 else 'NOT normally distributed'}")
+
+# Perform ANOVA
+model = smf.ols('Score ~ C(Timepoint)', data=df_long).fit()
+anova_table = sm.stats.anova_lm(model, typ=2)
+print(f"\nANOVA Results:")
+print(anova_table)
+
+if anova_table['PR(>F)'][0] < 0.05:
+    print("\n→ Significant difference between Pretest and Posttest! (p < 0.05)")
+else:
+    print("\n→ No significant difference between Pretest and Posttest (p >= 0.05)")
+    # Mann-Whitney U as alternative
+    pretest_scores = df_long[df_long['Timepoint'] == 'Pretest']['Score']
+    posttest_scores = df_long[df_long['Timepoint'] == 'Posttest']['Score']
+    u_stat, p_mwu = mannwhitneyu(pretest_scores, posttest_scores, alternative='two-sided')
+    print(f"\nMann-Whitney U Test (alternative):")
+    print(f"  U = {u_stat:.2f}, p = {p_mwu:.4f}")
 
 # --------- plot the results -----------
-# Select columns to plot
+print(f"\n{'='*60}")
+print("Generating Plots...")
+print(f"{'='*60}")
+
+# Create boxplot for Pretest vs Posttest comparison
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.boxplot(x='Timepoint', y='Score', data=df_long, ax=ax, palette='Set2')
+sns.stripplot(x='Timepoint', y='Score', data=df_long, color='black', size=4, jitter=True, ax=ax, alpha=0.6)
+ax.set_title('Fingergeschicklichkeit: Pretest vs Posttest', fontsize=16, fontweight='bold')
+ax.set_xlabel('Timepoint', fontsize=14)
+ax.set_ylabel('Correct Sequences', fontsize=14)
+ax.tick_params(axis='both', labelsize=12)
+plt.tight_layout()
+plt.show()
+
+# Select columns to plot individually
 cols = [c for c in df_finger_clean.columns if 'correct' in c or 'keys' in c]
 num_plots = len(cols)
 
@@ -128,16 +138,14 @@ rows = math.ceil(num_plots / cols_per_row)
 fig, axes = plt.subplots(nrows=rows, ncols=cols_per_row, figsize=(6 * cols_per_row, 5 * rows))
 axes = axes.flatten()  # Flatten in case of multi-row layout
 
-# Plot each boxplot
+# Plot each distribution
 for i, col in enumerate(cols):
     ax = axes[i]
-    sns.boxplot(x='Category', y=col, data=df_finger_clean, ax=ax)
-    sns.stripplot(x='Category', y=col, data=df_finger_clean, color='black', size=6, jitter=True, ax=ax)
-    ax.set_title(f'{col} by Category', fontsize=16)
-    ax.set_xlabel('', fontsize=16)
-    ax.set_ylabel('correct sequences', fontsize=14)
+    sns.boxplot(y=df_finger_clean[col], ax=ax)
+    sns.stripplot(y=df_finger_clean[col], color='black', size=6, jitter=True, ax=ax)
+    ax.set_title(f'{col}', fontsize=16)
+    ax.set_ylabel('correct sequences' if 'correct' in col else 'key presses', fontsize=14)
 
-    ax.tick_params(axis='x', labelsize=16, rotation=45)
     ax.tick_params(axis='y', labelsize=16)
 
     # Set y-axis limits
@@ -164,21 +172,14 @@ os.makedirs(output_dir, exist_ok=True)
 # Save each boxplot individually
 for col in cols:
     fig, ax = plt.subplots(figsize=(6, 5))
-    sns.boxplot(x='Category', y=col, data=df_finger_clean, ax=ax)
-    sns.stripplot(x='Category', y=col, data=df_finger_clean, color='black', size=4, jitter=True, ax=ax)
+    sns.boxplot(y=df_finger_clean[col], ax=ax)
+    sns.stripplot(y=df_finger_clean[col], color='black', size=4, jitter=True, ax=ax)
 
     # Title and axis formatting
-    ax.set_title(f'{col} by Category', fontsize=16)
-    ax.set_xlabel('')
+    ax.set_title(f'{col}', fontsize=16)
     
     # Set custom y-label
-    if col == 'Finger_1_1_correct':
-        ax.set_ylabel('Correct Sequences', fontsize=14)
-    elif col == 'Finger_1_2_correct':
-        ax.set_ylabel('Correct Sequences', fontsize=14)
-    elif col == 'Finger_5_1_correct':
-        ax.set_ylabel('Correct Sequences', fontsize=14)
-    elif col == 'Finger_5_2_correct':
+    if col in ['Fingertest1_correct', 'Fingertest2_correct', 'Fingertest3_correct', 'Fingertest4_correct']:
         ax.set_ylabel('Correct Sequences', fontsize=14)
     elif 'keys' in col:
         ax.set_ylabel('Key Presses', fontsize=14)
@@ -186,11 +187,10 @@ for col in cols:
         ax.set_ylabel(col.replace('_', ' ').title(), fontsize=14)
 
     # Axis ticks
-    ax.tick_params(axis='x', labelsize=12, rotation=45)
     ax.tick_params(axis='y', labelsize=12)
 
     # Set y-limits
-    if col in ['Finger_5_1_correct', 'Finger_5_2_correct']:  # the top-right ones
+    if col in ['Fingertest3_correct', 'Fingertest4_correct']:  # the post-test ones
         ax.set_ylim(10, 35)
     elif 'correct' in col:
         ax.set_ylim(5, 30)
