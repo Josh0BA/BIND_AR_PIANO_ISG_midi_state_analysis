@@ -1,4 +1,5 @@
 from typing import List, Tuple, Dict
+import pandas as pd
 from .config import BLOCK_FREQ_BY_INDEX
 
 def choose_freq_pattern(block: str, n_events: int) -> str:
@@ -9,9 +10,14 @@ def choose_freq_pattern(block: str, n_events: int) -> str:
         return "Block_Training"
     return "Test" if n_events <= 55 else "Block_Training"
 
-def compute_transitions(events: List[Tuple[float, int]]) -> List[Dict]:
-    return [
-        {
+def compute_transitions(events: pd.DataFrame) -> pd.DataFrame:
+    if events.empty:
+        return pd.DataFrame()
+    transitions = []
+    for i in range(len(events) - 1):
+        t1, s1 = events.iloc[i]["time_s"], events.iloc[i]["state"]
+        t2, s2 = events.iloc[i + 1]["time_s"], events.iloc[i + 1]["state"]
+        transitions.append({
             "idx_from": i,
             "state_from": s1,
             "onset_from_s": t1,
@@ -19,6 +25,5 @@ def compute_transitions(events: List[Tuple[float, int]]) -> List[Dict]:
             "state_to": s2,
             "onset_to_s": t2,
             "transition_time_s": t2 - t1,
-        }
-        for i, ((t1, s1), (t2, s2)) in enumerate(zip(events, events[1:]))
-    ]
+        })
+    return pd.DataFrame(transitions)
