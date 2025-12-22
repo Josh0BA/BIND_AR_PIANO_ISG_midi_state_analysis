@@ -21,6 +21,8 @@ midi-analysis . -o output.csv
 Die Analyse erzeugt eine CSV-Datei (z. B. MIDI_ANALYSIS_STATES.csv).
 Diese enthält pro Übergang: subject, block, state_from, state_to, onset-Zeiten, transition_time und die zugehörige Häufigkeit (h oder s).
 
+**Hinweis:** Eine detaillierte Erklärung der CSV-Spalten und warum Lücken in der idx_from-Sequenz auftreten, findest du in [CSV_ERKLAERUNG.md](CSV_ERKLAERUNG.md).
+
 Funktionen:
 - Erkennt 9 Zustände (state0–state8) anhand fixer 6er-Kombinationen von Pitches
 - Berechnet Transitionen zwischen Zuständen mit Zeiten in Sekunden

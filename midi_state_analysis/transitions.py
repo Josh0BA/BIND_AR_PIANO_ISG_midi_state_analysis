@@ -28,6 +28,13 @@ def compute_transition_id(state_from: int, state_to: int) -> int:
     return int(f"{state_from}{state_to}")
 
 def compute_transitions(events: pd.DataFrame) -> pd.DataFrame:
+    """
+    Berechnet alle Übergänge zwischen aufeinanderfolgenden States.
+    
+    Hinweis: idx_from und idx_to geben die Position des States in der MIDI-Datei an.
+    Nach der Filterung in analyzer.py können Lücken in der idx_from-Sequenz auftreten,
+    wenn ungültige Übergänge aussortiert werden.
+    """
     if events.empty:
         return pd.DataFrame()
     transitions = []
@@ -36,10 +43,10 @@ def compute_transitions(events: pd.DataFrame) -> pd.DataFrame:
         t2, s2 = events.iloc[i + 1]["time_s"], events.iloc[i + 1]["state"]
         transition_id = compute_transition_id(s1, s2)
         transitions.append({
-            "idx_from": i,
+            "idx_from": i,  # Position des Start-States in der MIDI-Datei
             "state_from": s1,
             "onset_from_s": t1,
-            "idx_to": i + 1,
+            "idx_to": i + 1,  # Position des Ziel-States in der MIDI-Datei
             "state_to": s2,
             "onset_to_s": t2,
             "transition_time_s": t2 - t1,

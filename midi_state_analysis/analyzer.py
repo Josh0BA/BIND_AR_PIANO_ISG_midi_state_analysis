@@ -28,6 +28,8 @@ def analyze_root_folder(root_folder: str, output_csv: str):
                 valid_transitions = set(sequence)
                 
                 # Filtere nur Übergänge, die in der erwarteten Sequenz vorkommen
+                # Dies führt zu Lücken in idx_from, wenn ungültige Übergänge aussortiert werden
+                # (z.B. bei Fehlern oder unerwarteten States des Teilnehmers)
                 transitions_filtered = transitions[transitions['transition_id'].isin(valid_transitions)].copy()
                 
                 if transitions_filtered.empty:
