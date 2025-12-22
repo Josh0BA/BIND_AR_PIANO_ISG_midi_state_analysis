@@ -9,11 +9,7 @@ from scipy import stats
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import seaborn as sns
-import matplotlib.pyplot as plt  # Extract participant ID, appointment, song, and attempt from filename
-participant_id = filename.split('_')[0]
-appointment = filename.split('_')[1]
-song = filename.split('_')[2]
-attempt = filename.split('_')[3].split('.')[0]  # Remove file extension
+import matplotlib.pyplot as plt
 import math
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 import os
@@ -35,8 +31,8 @@ df_finger = pd.read_csv(csv_path)
 Fingertest1_correct = 16
 Fingertest2_correct = 26
 
-df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingertest1_correct'] = Fingertest1_correct
-df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingertest2_correct'] = Fingertest2_correct
+df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingerttest_1_correct'] = Fingertest1_correct
+df_finger.loc[df_finger['Participant_ID'] == 'JE13CL', 'Fingerttest_2_correct'] = Fingertest2_correct
 
 
 
@@ -50,8 +46,8 @@ data_long = []
 for idx, row in df_finger_clean.iterrows():
     participant_id = row['Participant_ID']
     
-    # Pretest (Fingertest1 and Fingertest2)
-    for col in ['Fingertest1_correct', 'Fingertest2_correct']:
+    # Pretest (Fingerttest_1 and Fingerttest_2)
+    for col in ['Fingerttest_1_correct', 'Fingerttest_2_correct']:
         if col in df_finger_clean.columns and not pd.isna(row[col]):
             data_long.append({
                 'Participant_ID': participant_id,
@@ -60,8 +56,8 @@ for idx, row in df_finger_clean.iterrows():
                 'Score': row[col]
             })
     
-    # Posttest (Fingertest3 and Fingertest4)
-    for col in ['Fingertest3_correct', 'Fingertest4_correct']:
+    # Posttest (Fingerttest_3 and Fingerttest_4)
+    for col in ['Fingerttest_3_correct', 'Fingerttest_4_correct']:
         if col in df_finger_clean.columns and not pd.isna(row[col]):
             data_long.append({
                 'Participant_ID': participant_id,
@@ -72,10 +68,10 @@ for idx, row in df_finger_clean.iterrows():
 
 df_long = pd.DataFrame(data_long)
 
-# Paired t-test: Fingertest1 vs Fingertest3
-if 'Fingertest1_correct' in df_finger_clean.columns and 'Fingertest3_correct' in df_finger_clean.columns:
-    t_stat, p_val = ttest_rel(df_finger_clean['Fingertest1_correct'], df_finger_clean['Fingertest3_correct'])
-    print(f"\nPaired t-test (Fingertest1 vs Fingertest3):")
+# Paired t-test: Fingerttest_1 vs Fingerttest_3
+if 'Fingerttest_1_correct' in df_finger_clean.columns and 'Fingerttest_3_correct' in df_finger_clean.columns:
+    t_stat, p_val = ttest_rel(df_finger_clean['Fingerttest_1_correct'], df_finger_clean['Fingerttest_3_correct'])
+    print(f"\nPaired t-test (Fingerttest_1 vs Fingerttest_3):")
     print(f"  t-statistic = {t_stat:.2f}")
     print(f"  p-value = {p_val:.4f}")
     print(f"  Result: {'Significant difference' if p_val < 0.05 else 'No significant difference'}")
@@ -179,7 +175,7 @@ for col in cols:
     ax.set_title(f'{col}', fontsize=16)
     
     # Set custom y-label
-    if col in ['Fingertest1_correct', 'Fingertest2_correct', 'Fingertest3_correct', 'Fingertest4_correct']:
+    if col in ['Fingerttest_1_correct', 'Fingerttest_2_correct', 'Fingerttest_3_correct', 'Fingerttest_4_correct']:
         ax.set_ylabel('Correct Sequences', fontsize=14)
     elif 'keys' in col:
         ax.set_ylabel('Key Presses', fontsize=14)
@@ -190,7 +186,7 @@ for col in cols:
     ax.tick_params(axis='y', labelsize=12)
 
     # Set y-limits
-    if col in ['Fingertest3_correct', 'Fingertest4_correct']:  # the post-test ones
+    if col in ['Fingerttest_3_correct', 'Fingerttest_4_correct']:  # the post-test ones
         ax.set_ylim(10, 35)
     elif 'correct' in col:
         ax.set_ylim(5, 30)

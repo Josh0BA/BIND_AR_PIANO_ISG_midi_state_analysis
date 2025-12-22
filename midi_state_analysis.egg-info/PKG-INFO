@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: midi_state_analysis
+Version: 1.0.0
+Summary: Analyse von State-Transitionen in Klavier-MIDI-Daten
+Author: Your Name
+License-File: LICENSE
+Requires-Dist: mido
+Requires-Dist: pandas
+Requires-Dist: pretty_midi
+Requires-Dist: scipy
+Requires-Dist: statsmodels
+Requires-Dist: seaborn
+Requires-Dist: matplotlib
+Dynamic: author
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
